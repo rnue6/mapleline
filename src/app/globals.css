@@ -4,6 +4,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #b86633;
+  --muted-bg: #faf8f5;
 }
 
 body {

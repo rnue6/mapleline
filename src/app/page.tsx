@@ -18,10 +18,7 @@ export default function HomePage() {
   const [city, setCity] = useState('');
   const [postalCode, setPostalCode] = useState('');
 
-  // Example action button - keep or remove as needed
-  const handleButtonClick = (buttonName: string) => {
-    alert(`${buttonName} clicked!`);
-  };
+  // (no unused example handlers)
 
   return (
     <div className="min-h-screen bg-transparent">
@@ -33,7 +30,7 @@ export default function HomePage() {
           </h1>
 
           {/* Map placeholder component - Leaflet will mount into #map */}
-          <MapPlaceholder />
+          <MapPlaceholder province={province} city={city} postalCode={postalCode} />
 
           {/* Inputs are controlled and extracted into a component */}
           <SearchInputs
