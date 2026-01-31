@@ -29,7 +29,7 @@ export default function HomePage() {
       <main className="flex min-h-[calc(100vh-80px)] items-start justify-center px-6 py-8">
         <div className="w-full max-w-4xl">
           <h1 className="text-5xl font-bold text-center mb-6" style={{ color: '#b86633' }}>
-            <span>RahimaLine</span>
+            <span>MapleLine</span>
           </h1>
 
           {/* Map placeholder component - Leaflet will mount into #map */}
