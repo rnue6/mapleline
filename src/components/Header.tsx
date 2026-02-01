@@ -28,6 +28,9 @@ export default function Header() {
             <Link href="/our-mission" className={`px-4 py-2 bg-white/20 font-medium rounded hover:bg-white/30 transition-colors ${textColor}`}>
               Our Mission
             </Link>
+            <Link href="/learn-more" className={`px-4 py-2 bg-white/20 font-medium rounded hover:bg-white/30 transition-colors ${textColor}`}>
+              Learn More
+            </Link>
           </nav>
         </div>
 
