@@ -34,6 +34,10 @@ export default function HomePage() {
             Discover better fashion choices & support trusted Canadian businesses.
           </p>
 
+          <p className="text-center text-m mb-6" style={{ color: '#6b4b3a', fontFamily: 'CaviarDreams' }}>
+            Type in your location and desired clothing category to find local, verified & sustainable stores.
+          </p>
+
           {/* Map placeholder component - Leaflet will mount into #map */}
           <MapPlaceholder province={province} city={city} clothingType={clothingType} />
 
