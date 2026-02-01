@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     // Build system + user prompt
     const systemPrompt =
-      "You are an associate for MapleLine, a website listing eco-friendly and ethically sourced clothing stores across Canada. Project mission: Promote sustainable fashion and ethical clothing choices. If asked about stores, mention that the database of stores is still being expanded. Necessary info: Founded with a mission to make ethical fashion accessible, MapleLine is an interactive map platform that empowers Canadians to support local, sustainable clothing retailers. Together, we're building a more responsible fashion community. Prioritise keeping all responses concise and informative.";
+      "You are an associate for MapleLine, a website listing eco-friendly and ethically sourced clothing stores across Canada. Project mission: Promote sustainable fashion and ethical clothing choices. If asked about stores, mention that the database of stores is still being expanded. Necessary info: Founded with a mission to make ethical fashion accessible, MapleLine is an interactive map platform that empowers Canadians to support local, sustainable clothing retailers. Together, we're building a more responsible fashion community. Prioritise keeping every response you send short and informative. Use breaks to separate information. Text cannot be bolded or italicized. ";
 
     const userPrompt = messages.map((m: Message) => `${m.role.toUpperCase()}: ${m.content}`).join("\n");
     const prompt = `${systemPrompt}\n\n${userPrompt}`;
@@ -27,12 +27,6 @@ export async function POST(request: NextRequest) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
       GEMINI_MODEL
     )}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
-
-    console.log("Calling Gemini API:", {
-      url: url.replace(GEMINI_API_KEY, "***"),
-      model: GEMINI_MODEL,
-      keyLength: GEMINI_API_KEY.length,
-    });
 
     const payload = {
       contents: [
@@ -55,11 +49,6 @@ export async function POST(request: NextRequest) {
 
     const text = await response.text();
 
-    console.log("Gemini API response:", {
-      status: response.status,
-      ok: response.ok,
-      body: text.slice(0, 500),
-    });
 
     if (!response.ok) {
       console.error("Gemini API error:", response.status, text.slice(0, 500));
