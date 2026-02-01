@@ -22,9 +22,6 @@ export default function Header() {
             <Link href="/" className={`px-4 py-2 bg-white/20 font-medium rounded hover:bg-white/30 transition-colors ${textColor}`}>
               Home
             </Link>
-            <Link href="/about" className={`px-4 py-2 bg-white/20 font-medium rounded hover:bg-white/30 transition-colors ${textColor}`}>
-              About
-            </Link>
             <Link href="/contact" className={`px-4 py-2 bg-white/20 font-medium rounded hover:bg-white/30 transition-colors ${textColor}`}>
               Contact Us
             </Link>
@@ -35,7 +32,9 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Image src={logoSrc} alt="MapleLine logo" width={56} height={56} className="rounded" />
+          <Link href="/">
+            <Image src={logoSrc} alt="MapleLine logo" width={56} height={56} className="rounded cursor-pointer hover:opacity-80 transition-opacity" />
+          </Link>
         </div>
       </div>
     </header>

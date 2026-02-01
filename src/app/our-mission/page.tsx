@@ -17,28 +17,28 @@ export default function OurMission() {
           </h1>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="text-center p-4 border rounded">
-              <div className="flex justify-center mb-4">
-                <Image src={icon1} alt="icon1" width={64} height={64} />
-              </div>
-              <h3 className="font-semibold mb-2">Quality</h3>
-              <p>Editable text describing your commitment to quality.</p>
+              <div className="text-center p-4 rounded bg-white">
+                <div className="flex justify-center mb-4">
+                  <Image src={icon3} alt="icon1" width={64} height={64} className="floating-icon" />
+                </div>
+              <h3 className="font-semibold mb-2">Our Mission</h3>
+              <p>MapleLine is dedicated to helping users discover sustainable and ethically sourced local clothing. We connect conscious consumers with boutique retailers who prioritize environmental responsibility and fair-trade practices across Canada.</p>
             </div>
 
-            <div className="text-center p-4 border rounded">
-              <div className="flex justify-center mb-4">
-                <Image src={icon2} alt="icon2" width={64} height={64} />
-              </div>
-              <h3 className="font-semibold mb-2">Community</h3>
-              <p>Editable text describing your community values.</p>
-            </div>
-
-            <div className="text-center p-4 border rounded">
-              <div className="flex justify-center mb-4">
-                <Image src={icon3} alt="icon3" width={64} height={64} />
-              </div>
+              <div className="text-center p-4 rounded bg-white">
+                <div className="flex justify-center mb-4">
+                  <Image src={icon1} alt="icon3" width={64} height={64} className="floating-icon" />
+                </div>
               <h3 className="font-semibold mb-2">Sustainability</h3>
-              <p>Editable text describing sustainability goals.</p>
+              <p>We believe in supporting businesses that care about the planet. From organic fabrics to upcycled accessories, our partner stores offer clothing that doesn't compromise on style or environmental values.</p>
+            </div>
+
+              <div className="text-center p-4 rounded bg-white">
+              <div className="flex justify-center mb-4">
+                <Image src={icon2} alt="company" width={64} height={64} className="floating-icon" />
+              </div>
+              <h3 className="font-semibold mb-2">About MapleLine</h3>
+              <p>Founded with a mission to make ethical fashion accessible, MapleLine is an interactive map platform that empowers Canadians to support local, sustainable clothing retailers. Together, we're building a more responsible fashion community.</p>
             </div>
           </div>
         </div>

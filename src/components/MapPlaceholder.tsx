@@ -7,7 +7,7 @@ import "../lib/leaflet/dist/leaflet.css";
 type Props = {
   province: string;
   city: string;
-  postalCode: string;
+  clothingType: string;
 };
 
 function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -22,10 +22,11 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   return R * c;
 }
 
-export default function MapPlaceholder({ province, city, postalCode }: Props) {
+export default function MapPlaceholder({ province, city, clothingType }: Props) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const leafletMapRef = useRef<any>(null);
   const markersRef = useRef<any>(null);
+  const LRef = useRef<any>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,6 +36,7 @@ export default function MapPlaceholder({ province, city, postalCode }: Props) {
       const mod = await import("../lib/leaflet/dist/leaflet-src.esm.js");
       // Leaflet exports as default or module itself
       const L = (mod && (mod as any).default) || mod;
+      LRef.current = L;
 
       if (cancelled) return;
 
@@ -42,6 +44,8 @@ export default function MapPlaceholder({ province, city, postalCode }: Props) {
         leafletMapRef.current = L.map(mapRef.current, {
           center: [56.1304, -106.3468], // Canada center
           zoom: 4,
+          maxBounds: [[42, -141], [83.5, -52]], // Canada boundaries
+          maxBoundsViscosity: 1.0,
         });
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -49,6 +53,47 @@ export default function MapPlaceholder({ province, city, postalCode }: Props) {
         }).addTo(leafletMapRef.current);
 
         markersRef.current = L.layerGroup().addTo(leafletMapRef.current);
+
+        // Show all stores initially filtered by clothing type
+        const filteredStores = clothingType === "All" 
+          ? stores 
+          : stores.filter((s) => s.clothingTypes.includes(clothingType));
+
+        const customIcon = L.icon({
+          iconUrl: "/mapleline_logo_icon.png",
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+          popupAnchor: [0, -32],
+          shadowUrl: null,
+        });
+        
+        // Apply border styling to icons when they're created
+        markersRef.current.on('layeradd', function(e) {
+          if (e.layer instanceof L.Marker) {
+            const img = e.layer._icon;
+            if (img) {
+              img.style.filter = 'drop-shadow(0 0 0 2px black)';
+              img.style.borderRadius = '50%';
+            }
+          }
+        });
+
+        filteredStores.forEach((s) => {
+          const popup = `<div class="store-popup">
+            <strong>${s.name}</strong><br/>
+            <span>${s.address}</span><br/>
+            <span>${s.phone}</span><br/>
+            <span>Rating: ${s.rating} ⭐</span><br/>
+            <span style="font-size: 0.9em; color: #666;">
+              ${s.clothingTypes.join(", ")}
+            </span><br/>
+            <span style="font-style: italic; color: #b86633; font-size: 0.95em; margin-top: 5px; display: block;">
+              ${s.tagline}
+            </span>
+          </div>`;
+          
+          L.marker([s.lat, s.lng], { icon: customIcon }).addTo(markersRef.current).bindPopup(popup);
+        });
       }
     }
 
@@ -65,50 +110,105 @@ export default function MapPlaceholder({ province, city, postalCode }: Props) {
     };
   }, []);
 
-  // react to location inputs and re-center / add markers
+  // react to location inputs and clothing type filter
   useEffect(() => {
+    if (!LRef.current || !markersRef.current || !leafletMapRef.current) return;
+
     let cancelled = false;
     let timeout = 0 as unknown as number;
 
     const queryParts: string[] = [];
     if (city) queryParts.push(city);
     if (province) queryParts.push(province);
-    if (postalCode) queryParts.push(postalCode);
     queryParts.push("Canada");
     const query = queryParts.filter(Boolean).join(" ").trim();
 
     const doSearch = async () => {
-      if (!query) return;
-      try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (cancelled) return;
+      const L = LRef.current;
+      
+      // clear markers
+      markersRef.current.clearLayers();
 
-        if (data && data.length > 0 && leafletMapRef.current) {
-          const top = data[0];
-          const lat = parseFloat(top.lat);
-          const lon = parseFloat(top.lon);
-          leafletMapRef.current.setView([lat, lon], 13);
+      // Filter stores by clothing type
+      const filteredStores = clothingType === "All"
+        ? stores
+        : stores.filter((s) => s.clothingTypes.includes(clothingType));
 
-          // clear markers
-          if (markersRef.current) markersRef.current.clearLayers();
+      const customIcon = L.icon({
+        iconUrl: "/mapleline_logo_icon.png",
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32],
+        shadowUrl: null,
+      });
+      
+      // Apply border styling to newly added markers
+      const applyIconStyle = function() {
+        const markers = markersRef.current.getLayers();
+        markers.forEach((marker: any) => {
+          if (marker._icon) {
+            marker._icon.style.filter = 'drop-shadow(0 0 0 2px black)';
+            marker._icon.style.borderRadius = '50%';
+          }
+        });
+      };
+      
+      setTimeout(applyIconStyle, 10);
 
-          // add search location marker
-          const mod = await import("../lib/leaflet/dist/leaflet-src.esm.js");
-          const L = (mod && (mod as any).default) || mod;
-          L.marker([lat, lon]).addTo(markersRef.current).bindPopup("Search location");
+      if (query && query !== "Canada") {
+        try {
+          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+          const res = await fetch(url);
+          const data = await res.json();
+          if (cancelled) return;
 
-          // show nearby stores (within 15 km)
-          const nearby = stores.filter((s) => getDistanceKm(lat, lon, s.lat, s.lng) <= 15);
-          nearby.forEach((s) => {
-            const popup = `<strong>${s.name}</strong><br/>${s.address}<br/>${s.phone}<br/>Rating: ${s.rating}`;
-            L.marker([s.lat, s.lng]).addTo(markersRef.current).bindPopup(popup);
-          });
+          if (data && data.length > 0) {
+            const top = data[0];
+            const lat = parseFloat(top.lat);
+            const lon = parseFloat(top.lon);
+            leafletMapRef.current.setView([lat, lon], 13);
+
+            // show nearby stores (within 15 km)
+            const nearby = filteredStores.filter((s) => getDistanceKm(lat, lon, s.lat, s.lng) <= 15);
+            
+            nearby.forEach((s) => {
+              const popup = `<div class="store-popup">
+                <strong>${s.name}</strong><br/>
+                <span>${s.address}</span><br/>
+                <span>${s.phone}</span><br/>
+                <span>Rating: ${s.rating} ⭐</span><br/>
+                <span style="font-size: 0.9em; color: #666;">
+                  ${s.clothingTypes.join(", ")}
+                </span><br/>
+                <span style="font-style: italic; color: #b86633; font-size: 0.95em; margin-top: 5px; display: block;">
+                  ${s.tagline}
+                </span>
+              </div>`;
+              
+              L.marker([s.lat, s.lng], { icon: customIcon }).addTo(markersRef.current).bindPopup(popup);
+            });
+          }
+        } catch (e) {
+          console.error(e);
         }
-      } catch (e) {
-        // ignore errors for now
-        console.error(e);
+      } else {
+        // Show all filtered stores if no location search
+        filteredStores.forEach((s) => {
+          const popup = `<div class="store-popup">
+            <strong>${s.name}</strong><br/>
+            <span>${s.address}</span><br/>
+            <span>${s.phone}</span><br/>
+            <span>Rating: ${s.rating} ⭐</span><br/>
+            <span style="font-size: 0.9em; color: #666;">
+              ${s.clothingTypes.join(", ")}
+            </span><br/>
+            <span style="font-style: italic; color: #b86633; font-size: 0.95em; margin-top: 5px; display: block;">
+              ${s.tagline}
+            </span>
+          </div>`;
+          
+          L.marker([s.lat, s.lng], { icon: customIcon }).addTo(markersRef.current).bindPopup(popup);
+        });
       }
     };
 
@@ -119,7 +219,7 @@ export default function MapPlaceholder({ province, city, postalCode }: Props) {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [city, province, postalCode]);
+  }, [city, province, clothingType]);
 
   return (
     <div
