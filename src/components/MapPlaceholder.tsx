@@ -54,10 +54,11 @@ export default function MapPlaceholder({ province, city, clothingType }: Props) 
 
         markersRef.current = L.layerGroup().addTo(leafletMapRef.current);
 
-        // Show all stores initially filtered by clothing type
-        const filteredStores = clothingType === "All" 
-          ? stores 
-          : stores.filter((s) => s.clothingTypes.includes(clothingType));
+        // Show all stores initially filtered by clothing type (case-insensitive match)
+        const normalizedClothing = (clothingType || "").toLowerCase();
+        const filteredStores = normalizedClothing === "all" || !normalizedClothing
+          ? stores
+          : stores.filter((s) => s.clothingTypes.map((t) => t.toLowerCase()).includes(normalizedClothing));
 
         const customIcon = L.icon({
           iconUrl: "/mapleline_logo_icon.png",
@@ -115,24 +116,20 @@ export default function MapPlaceholder({ province, city, clothingType }: Props) 
     if (!LRef.current || !markersRef.current || !leafletMapRef.current) return;
 
     let cancelled = false;
-    let timeout = 0 as unknown as number;
 
-    const queryParts: string[] = [];
-    if (city) queryParts.push(city);
-    if (province) queryParts.push(province);
-    queryParts.push("Canada");
-    const query = queryParts.filter(Boolean).join(" ").trim();
+    const updateMarkers = async () => {
+      if (cancelled) return;
 
-    const doSearch = async () => {
       const L = LRef.current;
-      
+
       // clear markers
       markersRef.current.clearLayers();
 
-      // Filter stores by clothing type
-      const filteredStores = clothingType === "All"
+      // Filter stores by clothing type (case-insensitive)
+      const normalizedClothing = (clothingType || "").toLowerCase();
+      const filteredStores = normalizedClothing === "all" || !normalizedClothing
         ? stores
-        : stores.filter((s) => s.clothingTypes.includes(clothingType));
+        : stores.filter((s) => s.clothingTypes.map((t) => t.toLowerCase()).includes(normalizedClothing));
 
       const customIcon = L.icon({
         iconUrl: "/mapleline_logo_icon.png",
@@ -141,7 +138,37 @@ export default function MapPlaceholder({ province, city, clothingType }: Props) 
         popupAnchor: [0, -32],
         shadowUrl: null,
       });
-      
+
+      // Search if either province or city is filled
+      const hasLocationFilters = Boolean(province.trim() || city.trim());
+
+      if (!hasLocationFilters) {
+        // Show all stores filtered by clothing type if location fields are empty
+        filteredStores.forEach((s) => {
+          const popup = `<div class="store-popup">
+            <strong>${s.name}</strong><br/>
+            <span>${s.address}</span><br/>
+            <span>${s.phone}</span><br/>
+            <span>Rating: ${s.rating} ⭐</span><br/>
+            <span style="font-size: 0.9em; color: #666;">
+              ${s.clothingTypes.join(", ")}
+            </span><br/>
+            <span style="font-style: italic; color: #b86633; font-size: 0.95em; margin-top: 5px; display: block;">
+              ${s.tagline}
+            </span>
+          </div>`;
+          
+          L.marker([s.lat, s.lng], { icon: customIcon }).addTo(markersRef.current).bindPopup(popup);
+        });
+        return;
+      }
+
+      const queryParts: string[] = [];
+      if (city) queryParts.push(city);
+      if (province) queryParts.push(province);
+      queryParts.push("Canada");
+      const query = queryParts.filter(Boolean).join(" ").trim();
+
       // Apply border styling to newly added markers
       const applyIconStyle = function() {
         const markers = markersRef.current.getLayers();
@@ -212,12 +239,11 @@ export default function MapPlaceholder({ province, city, clothingType }: Props) 
       }
     };
 
-    // debounce a bit for typing
-    timeout = window.setTimeout(doSearch, 700);
+    // Run update immediately (no debounce) so dropdown changes reflect instantly
+    updateMarkers();
 
     return () => {
       cancelled = true;
-      clearTimeout(timeout);
     };
   }, [city, province, clothingType]);
 
